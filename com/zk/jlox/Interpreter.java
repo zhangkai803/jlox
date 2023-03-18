@@ -1,7 +1,9 @@
 package com.zk.jlox;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.zk.jlox.Expr.Assign;
 import com.zk.jlox.Expr.Binary;
@@ -24,6 +26,12 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     final Environment globals = new Environment();
     private Environment environment = globals;
+    private final Map<Expr, Integer> locals = new HashMap<>();
+
+
+    void resolve(Expr expr, int depth) {
+        locals.put(expr, depth);
+    }
 
     @Override
     public Void visitReturnStmt(Return stmt) {
@@ -145,14 +153,30 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitAssignExpr(Assign expr) {
         // 变量赋值语句
         Object value = evaluate(expr.value);
-        environment.assign(expr.name, value);
+        // environment.assign(expr.name, value);
+        Integer distance = locals.get(expr);
+        if (distance != null) {
+            environment.assignAt(distance, expr.name, value);
+        } else {
+            globals.assign(expr.name, value);
+        }
         return value;  // 这里可以返回 null 赋值语句本身是一个操作 这个操作没有返回值
     }
 
     @Override
     public Object visitVariableExpr(Variable expr) {
         // 变量表达式 即变量访问
-        return environment.get(expr.name);
+        // return environment.get(expr.name);
+        return lookUpVariable(expr.name, expr);
+    }
+
+    private Object lookUpVariable(Token name, Variable expr) {
+        Integer distance = locals.get(expr);
+        if (distance != null) {
+          return environment.getAt(distance, name.lexeme);
+        } else {
+          return globals.get(name);
+        }
     }
 
     @Override
