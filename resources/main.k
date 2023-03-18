@@ -49,3 +49,12 @@ while (k < 3)
     // while 循环体目前只能包含一条语句 识别到分号就退出了
     k = k + 1;
     print k;
+
+print ">> test for loop:";
+
+var a = 0;
+
+for (var i = 0; i < 101; i=i+1) {
+    a = a + i;
+}
+print a;

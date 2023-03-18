@@ -1,6 +1,7 @@
 package com.zk.jlox;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 class Parser {
@@ -43,7 +44,36 @@ class Parser {
         return new Stmt.Var(name, initializer);
     }
 
+    /*
+        第一部分 表达式
+        expression     → assignment ;
+        assignment     → IDENTIFIER "=" assignment | logic_or ;
+        logic_or       → logic_and ("or" logic_and)* ;
+        logic_and      → equality ( "and " equality )* ;
+        equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+        comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+        term           → factor ( ( "-" | "+" ) factor )* ;
+        factor         → unary ( ( "/" | "*" ) unary )* ;
+        unary          → ( "!" | "-" ) unary | primary ;
+        primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
+
+        第二部分 语句
+        program        → declaration* EOF ;
+        declaration    → varDecl | statement ;
+        varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+        statement      → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
+        exprStmt       → expression ";" ;
+        forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
+        ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
+        printStmt      → "print" expression ";" ;
+        whileStmt      → "while" "(" expression ")" statement ;
+        block          → "{" declaration* "}" ;
+     */
+
     private Stmt statement() {
+        if (match(TokenType.FOR)) {
+            return forStatement();
+        }
         if (match(TokenType.IF)) {
             // 如果遇到 if 关键字
             return ifStatement();
@@ -62,6 +92,78 @@ class Parser {
         }
         // 其他视为 表达式
         return expressionStatement();
+    }
+
+    private Stmt forStatement() {
+        /**
+         * for 语句由几部分组成
+         * for ( initializer; condition; increment; ) body;
+         * - initializer 初始化器 初始化循环中用到的变量 作用域在循环代码块中 可选
+         * - condition 循环条件 满足条件就执行代码块 不满足就会立即跳出 可选
+         * - increment 循环结束时的处理 一般用作循环变量自增 用于推进循环进度 可选
+         * - body 循环体代码块
+         */
+
+        // 首先以左括号开始
+        consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.");
+
+        // 初始化器部分
+        Stmt initializer;
+        if (match(TokenType.SEMICOLON)) {
+            // 如果左括号后面直接就是分号 意味着没有循环变量
+            initializer = null;
+        } else if (match(TokenType.VAR)) {
+            // 如果左括号后面是 var 关键字 意味着要声明循环变量
+            initializer = varDeclaration();
+        } else {
+            // 其他情况
+            initializer = expressionStatement();
+        }
+
+        // 循环条件部分
+        Expr condition = null;
+        // 循环条件部分也可能没写
+        if (!check(TokenType.SEMICOLON)) {
+            // 如果当前 token 不是分号 那肯定写了循环条件
+            condition = expression();
+        }
+        // 循环条件最后也需要分号结尾
+        consume(TokenType.SEMICOLON, "Expect ';' after loop condition.");
+
+        // 后处理部分
+        Expr increment = null;
+        if (!check(TokenType.RIGHT_BRACE)) {
+            // 只要不是右括号 那么肯定写了后处理部分
+            increment = expression();
+        }
+        // 进入循环代码块之前 要检测以右括号结尾
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        // 主代码块部分
+        Stmt body = statement();
+
+        // desugaring 脱糖部分 一
+        if (increment != null) {
+            // 将后处理部分 直接组装到主代码块后面
+            Stmt incremeStmt = new Stmt.Expression(increment);
+            body = new Stmt.Block(Arrays.asList(body, incremeStmt));
+        }
+        // 脱糖部分 二
+        if (condition == null) {
+            // 如果循环条件为空 用字面量 true 替换
+            condition = new Expr.Literal(true);
+        }
+        // 脱糖部分 三
+        // for 循环转成 while 循环
+        body = new Stmt.While(condition, body);
+
+        // 脱糖部分 四
+        if (initializer != null) {
+            // 如果有初始化器的话 其只需要执行一次 将语句放在循环体前面再包装一层
+            body = new Stmt.Block(Arrays.asList(initializer, body));
+        }
+
+        return body;
     }
 
     private Stmt whileStatement() {
@@ -123,31 +225,6 @@ class Parser {
         // return equality();
         return assignment();
     }
-
-    /*
-        第一部分 表达式
-        expression     → assignment ;
-        assignment     → IDENTIFIER "=" assignment | logic_or ;
-        logic_or       → logic_and ("or" logic_and)* ;
-        logic_and      → equality ( "and " equality )* ;
-        equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-        comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-        term           → factor ( ( "-" | "+" ) factor )* ;
-        factor         → unary ( ( "/" | "*" ) unary )* ;
-        unary          → ( "!" | "-" ) unary | primary ;
-        primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
-
-        第二部分 语句
-        program        → declaration* EOF ;
-        declaration    → varDecl | statement ;
-        varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement      → exprStmt | ifStmt | printStmt | whileStmt | block ;
-        exprStmt       → expression ";" ;
-        ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
-        printStmt      → "print" expression ";" ;
-        whileStmt      → "while" "(" expression ")" statement ;
-        block          → "{" declaration* "}" ;
-     */
 
     private Expr assignment() {
         // assignment     → IDENTIFIER "=" assignment | logic_or ;
