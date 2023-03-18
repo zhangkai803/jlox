@@ -6,16 +6,46 @@ import com.zk.jlox.Expr.Assign;
 import com.zk.jlox.Expr.Binary;
 import com.zk.jlox.Expr.Grouping;
 import com.zk.jlox.Expr.Literal;
+import com.zk.jlox.Expr.Logical;
 import com.zk.jlox.Expr.Unary;
 import com.zk.jlox.Expr.Variable;
 import com.zk.jlox.Stmt.Block;
 import com.zk.jlox.Stmt.Expression;
+import com.zk.jlox.Stmt.If;
 import com.zk.jlox.Stmt.Print;
 import com.zk.jlox.Stmt.Var;
 
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private Environment environment = new Environment();
+
+    @Override
+    public Object visitLogicalExpr(Logical expr) {
+        // 逻辑表达式计算
+        Object left = evaluate(expr.left);  // 先计算左边的值
+        // 短路特性
+        if (expr.operator.type == TokenType.OR) {  // 如果是 or
+            if (isTruthy(left)) {  // 并且左边为 true
+                return left;  // 可以直接返回 不需要计算右边
+            }
+        } else {  // 如果不是 or 那就是 and
+            if (!isTruthy(left)) {  // 如果左边不是 true
+                return left;  // 可以直接返回 不需要计算右边
+            }
+        }
+        return evaluate(expr.right);  // 其他情况 以右边值为准
+    }
+
+    @Override
+    public Void visitIfStmt(If stmt) {
+        // if 语句
+        if (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
+        return null;
+    }
 
     @Override
     public Void visitBlockStmt(Block stmt) {
@@ -84,6 +114,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     private void execute(Stmt stmt) {
+        // 执行语句
         stmt.accept(this);
     }
 
@@ -199,6 +230,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     private Object evaluate(Expr expression) {
+        // 执行表达式
         return expression.accept(this);
     }
 

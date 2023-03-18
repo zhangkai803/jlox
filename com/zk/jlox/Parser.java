@@ -44,6 +44,9 @@ class Parser {
     }
 
     private Stmt statement() {
+        if (match(TokenType.IF)) {
+            return ifStatement();
+        }
         if (match(TokenType.PRINT)) {
             // 如果遇到 print 关键字
             return printStatement();
@@ -54,6 +57,19 @@ class Parser {
         }
         // 其他视为 表达式
         return expressionStatement();
+    }
+
+    private Stmt ifStatement() {
+        consume(TokenType.LEFT_PAREN, "Expect '(' after if.");
+        Expr expr = expression();
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (match(TokenType.ELSE)) {
+            elseBranch = statement();
+        }
+        return new Stmt.If(expr, thenBranch, elseBranch);
     }
 
     private List<Stmt> block() {
@@ -95,9 +111,10 @@ class Parser {
 
     /*
         第一部分 表达式
-        / expression     → equality ;
         expression     → assignment ;
-        assignment     → IDENTIFIER "=" assignment | equality ;
+        assignment     → IDENTIFIER "=" assignment | logic_or ;
+        logic_or       → logic_and ("or" logic_and)* ;
+        logic_and      → equality ( "and " equality )* ;
         equality       → comparison ( ( "!=" | "==" ) comparison )* ;
         comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
         term           → factor ( ( "-" | "+" ) factor )* ;
@@ -109,15 +126,16 @@ class Parser {
         program        → declaration* EOF ;
         declaration    → varDecl | statement ;
         varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement      → exprStmt | printStmt | block ;
+        statement      → exprStmt | ifStmt | printStmt | block ;
         exprStmt       → expression ";" ;
+        ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
         printStmt      → "print" expression ";" ;
         block          → "{" declaration* "}" ;
      */
 
     private Expr assignment() {
-        // assignment     → IDENTIFIER "=" assignment | equality ;
-        Expr expr = equality();
+        // assignment     → IDENTIFIER "=" assignment | logic_or ;
+        Expr expr = or();
 
         if (match(TokenType.EQUAL)) {
             Token equals = previous();
@@ -130,6 +148,28 @@ class Parser {
             }
 
             error(equals, "Invalid assignment target.");
+        }
+        return expr;
+    }
+
+    private Expr or() {
+        // logic_or       → logic_and ("or" logic_and)* ;
+        Expr expr = and();
+        while (match(TokenType.OR)) {
+            Token operator = previous();
+            Expr right = and();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+        return expr;
+    }
+
+    private Expr and() {
+        // logic_and      → equality ( "and " equality )* ;
+        Expr expr = equality();
+        while (match(TokenType.AND)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Logical(expr, operator, right);
         }
         return expr;
     }

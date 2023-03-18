@@ -32,3 +32,11 @@ var c = "global c";
 print a;
 print b;
 print c;
+
+if (1 == 0)
+    print "if branch";
+else
+    print "else branch";
+
+print 1==1;
+print 1==0;
