@@ -1,7 +1,5 @@
-var a = 1
+var a
 
-var b
+a = 1
 
-b = a + 1
-
-print b
+print a

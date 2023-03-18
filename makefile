@@ -1,6 +1,6 @@
 jlox:
 	javac com/zk/jlox/Jlox.java
-	java com.zk.jlox.Jlox resources/main.k
+	java com.zk.jlox.Jlox ${FILE}
 
 Expr.java:
 	javac com/zk/tool/GenerateAst.java
