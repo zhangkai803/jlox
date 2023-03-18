@@ -13,6 +13,7 @@ import com.zk.jlox.Expr.Unary;
 import com.zk.jlox.Expr.Variable;
 import com.zk.jlox.Stmt.Block;
 import com.zk.jlox.Stmt.Expression;
+import com.zk.jlox.Stmt.Function;
 import com.zk.jlox.Stmt.If;
 import com.zk.jlox.Stmt.Print;
 import com.zk.jlox.Stmt.Var;
@@ -22,6 +23,13 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     final Environment globals = new Environment();
     private Environment environment = globals;
+
+    @Override
+    public Void visitFunctionStmt(Function stmt) {
+        JloxFunction function = new JloxFunction(stmt);
+        environment.define(stmt.name.lexeme, function);
+        return null;
+    }
 
     // 解释器示例化
     Interpreter() {
@@ -111,7 +119,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
-    private void executeBlock(List<Stmt> statements, Environment environment) {
+    void executeBlock(List<Stmt> statements, Environment environment) {
         Environment previous = this.environment;
         try {
             this.environment = environment;

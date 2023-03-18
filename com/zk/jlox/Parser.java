@@ -5,6 +5,37 @@ import java.util.Arrays;
 import java.util.List;
 
 class Parser {
+    /*
+        第一部分 表达式
+        expression     → assignment ;
+        assignment     → IDENTIFIER "=" assignment | logic_or ;
+        logic_or       → logic_and ("or" logic_and)* ;
+        logic_and      → equality ( "and " equality )* ;
+        equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+        comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+        term           → factor ( ( "-" | "+" ) factor )* ;
+        factor         → unary ( ( "/" | "*" ) unary )* ;
+        unary          → ( "!" | "-" ) unary | call ;
+        call           → primary ( "(" arguments? ")" )* ;
+        arguments      → expression ( "," expression )* ;
+        primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
+
+        第二部分 语句
+        program        → declaration* EOF ;
+        declaration    → funDecl | varDecl | statement ;
+        funDecl        → "fun" function ;
+        function       → IDENTIFIER "(" parameters? ")" block ;
+        parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+        varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+        statement      → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
+        exprStmt       → expression ";" ;
+        forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
+        ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
+        printStmt      → "print" expression ";" ;
+        whileStmt      → "while" "(" expression ")" statement ;
+        block          → "{" declaration* "}" ;
+     */
+
     private final List<Token> tokens;
     private int current = 0;
     private static class ParseError extends RuntimeException {}
@@ -23,6 +54,9 @@ class Parser {
 
     private Stmt declaration() {
         try {
+            if (match(TokenType.FUN)) {
+                return funDeclaration();
+            }
             if (match(TokenType.VAR)) {
                 return varDeclaration();
             }
@@ -31,6 +65,38 @@ class Parser {
             synchronize();
             return null;
         }
+    }
+
+    private Stmt funDeclaration() {
+        // funDecl        → "fun" function ;
+        return function("function");
+    }
+
+    private Stmt function(String kind) {
+        // function       → IDENTIFIER "(" parameters? ")" block ;
+        // parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+        // 先确保有一个 IDENTIFIER 作为函数名
+        Token name = consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
+        // 后面要跟上一个左括号开始定义函数入参
+        consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
+        // 解析入参列表
+        List<Token> parameters = new ArrayList<>();
+        if (!match(TokenType.RIGHT_PAREN)) {
+            // 如果下一个不是右括号 证明有定义函数入参 一直解析 遇到逗号继续
+            do {
+                if (parameters.size() > 255) {
+                    throw new RuntimeError(peek(), "Can't have more than 255 parameters.");
+                }
+                parameters.add(consume(TokenType.IDENTIFIER, "Expect parameter name."));
+            } while (match(TokenType.COMMA));
+        }
+        // 入参解析完之后 确保括号闭合
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
+        // 解析函数体 先确保以左打括号开头
+        consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        // 然后解析一整个代码块
+        List<Stmt> stmts = block();
+        return new Stmt.Function(name, parameters, stmts);
     }
 
     private Stmt varDeclaration() {
@@ -43,34 +109,6 @@ class Parser {
         consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
         return new Stmt.Var(name, initializer);
     }
-
-    /*
-        第一部分 表达式
-        expression     → assignment ;
-        assignment     → IDENTIFIER "=" assignment | logic_or ;
-        logic_or       → logic_and ("or" logic_and)* ;
-        logic_and      → equality ( "and " equality )* ;
-        equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-        comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-        term           → factor ( ( "-" | "+" ) factor )* ;
-        factor         → unary ( ( "/" | "*" ) unary )* ;
-        unary          → ( "!" | "-" ) unary | call ;
-        call           → primary ( "(" arguments? ")" )* ;
-        arguments      → expression ( "," expression )* ;
-        primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
-
-        第二部分 语句
-        program        → declaration* EOF ;
-        declaration    → varDecl | statement ;
-        varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement      → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
-        exprStmt       → expression ";" ;
-        forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
-        ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
-        printStmt      → "print" expression ";" ;
-        whileStmt      → "while" "(" expression ")" statement ;
-        block          → "{" declaration* "}" ;
-     */
 
     private Stmt statement() {
         if (match(TokenType.FOR)) {

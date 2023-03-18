@@ -61,3 +61,10 @@ print a;
 
 print ">> test native func lock():";
 print lock();
+
+print ">> test custom func:";
+fun sayHi(first, last) {
+  print "Hi, " + first + " " + last + "!";
+}
+
+sayHi("Dear", "Reader");
