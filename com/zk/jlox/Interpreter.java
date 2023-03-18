@@ -16,6 +16,7 @@ import com.zk.jlox.Stmt.Expression;
 import com.zk.jlox.Stmt.Function;
 import com.zk.jlox.Stmt.If;
 import com.zk.jlox.Stmt.Print;
+import com.zk.jlox.Stmt.Return;
 import com.zk.jlox.Stmt.Var;
 import com.zk.jlox.Stmt.While;
 
@@ -23,6 +24,15 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     final Environment globals = new Environment();
     private Environment environment = globals;
+
+    @Override
+    public Void visitReturnStmt(Return stmt) {
+        Object value = null;
+        if (stmt.value != null) {
+            value = evaluate(stmt.value);
+        }
+        throw new ReturnValue(value);
+    }
 
     @Override
     public Void visitFunctionStmt(Function stmt) {

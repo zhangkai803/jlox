@@ -25,7 +25,12 @@ class JloxFunction implements JloxCallable {
         }
         // 解释器执行函数代码块
         // 其中会操作 env 的替换与恢复
-        interpreter.executeBlock(declaration.body, environment);
+        try {
+            interpreter.executeBlock(declaration.body, environment);
+        } catch (ReturnValue value) {
+            // 把返回值以异常的形式抛出
+            return value.value;
+        }
         return null;
     }
 

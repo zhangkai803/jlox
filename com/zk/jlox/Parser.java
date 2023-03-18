@@ -27,11 +27,12 @@ class Parser {
         function       → IDENTIFIER "(" parameters? ")" block ;
         parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
         varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement      → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
+        statement      → exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block ;
         exprStmt       → expression ";" ;
         forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
         ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
         printStmt      → "print" expression ";" ;
+        returnStmt     → "return" expression? ";" ;
         whileStmt      → "while" "(" expression ")" statement ;
         block          → "{" declaration* "}" ;
      */
@@ -122,6 +123,10 @@ class Parser {
             // 如果遇到 print 关键字
             return printStatement();
         }
+        if (match(TokenType.RETURN)) {
+            // 如果遇到 return 关键字
+            return returnStatement();
+        }
         if (match(TokenType.WHILE)) {
             // 如果遇到 while 关键字
             return whileStatement();
@@ -132,6 +137,19 @@ class Parser {
         }
         // 其他视为 表达式
         return expressionStatement();
+    }
+
+    private Stmt returnStatement() {
+        // returnStmt     → "return" expression? ";" ;
+        Token keyword = previous();
+        Expr value = null;
+        if (!check(TokenType.SEMICOLON)) {
+            // return 后面如果不是分号 再去尝试解析返回值的表达式
+            value = expression();
+        }
+        // 返回值后面要有分号
+        consume(TokenType.SEMICOLON, "Expect ';' after return value.");
+        return new Stmt.Return(keyword, value);
     }
 
     private Stmt forStatement() {
