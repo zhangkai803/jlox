@@ -48,8 +48,24 @@ class Parser {
             // 如果遇到 print 关键字
             return printStatement();
         }
+        if (match(TokenType.LEFT_BRACE)) {
+            // 如果遇到左大括号 声明代码块
+            return new Stmt.Block(block());
+        }
         // 其他视为 表达式
         return expressionStatement();
+    }
+
+    private List<Stmt> block() {
+        List<Stmt> stmts = new ArrayList<>();
+
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            // 只要不遇到右打括号 或者已经到文件结尾 就持续解析
+            stmts.add(declaration());
+        }
+        // 最后保证代码块以右大括号结尾
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+        return stmts;
     }
 
     private Stmt expressionStatement() {
@@ -78,7 +94,7 @@ class Parser {
     }
 
     /*
-        第一部分
+        第一部分 表达式
         / expression     → equality ;
         expression     → assignment ;
         assignment     → IDENTIFIER "=" assignment | equality ;
@@ -89,13 +105,14 @@ class Parser {
         unary          → ( "!" | "-" ) unary | primary ;
         primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
 
-        第二部分
+        第二部分 语句
         program        → declaration* EOF ;
         declaration    → varDecl | statement ;
         varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement      → exprStmt | printStmt ;
+        statement      → exprStmt | printStmt | block ;
         exprStmt       → expression ";" ;
         printStmt      → "print" expression ";" ;
+        block          → "{" declaration* "}" ;
      */
 
     private Expr assignment() {
