@@ -1,7 +1,20 @@
 package com.zk.jlox;
 
+import com.zk.jlox.Expr.Assign;
+import com.zk.jlox.Expr.Variable;
+
 class AstPrinter implements Expr.Visitor<String> {
     String print(Expr expr) {
+        return expr.accept(this);
+    }
+
+    @Override
+    public String visitAssignExpr(Assign expr) {
+        return expr.accept(this);
+    }
+
+    @Override
+    public String visitVariableExpr(Variable expr) {
         return expr.accept(this);
     }
 

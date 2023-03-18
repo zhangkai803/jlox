@@ -2,14 +2,44 @@ package com.zk.jlox;
 
 import java.util.List;
 
+import com.zk.jlox.Expr.Assign;
 import com.zk.jlox.Expr.Binary;
 import com.zk.jlox.Expr.Grouping;
 import com.zk.jlox.Expr.Literal;
 import com.zk.jlox.Expr.Unary;
+import com.zk.jlox.Expr.Variable;
 import com.zk.jlox.Stmt.Expression;
 import com.zk.jlox.Stmt.Print;
+import com.zk.jlox.Stmt.Var;
 
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+
+    private Environment environment = new Environment();
+
+    @Override
+    public Object visitAssignExpr(Assign expr) {
+        // 变量赋值语句
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;  // 这里可以返回 null 赋值语句本身是一个操作 这个操作没有返回值
+    }
+
+    @Override
+    public Object visitVariableExpr(Variable expr) {
+        // 变量表达式 即变量访问
+        return environment.get(expr.name);
+    }
+
+    @Override
+    public Void visitVarStmt(Var stmt) {
+        // 变量声明语句
+        Object value = null;
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer);
+        }
+        environment.define(stmt.name.lexeme, value);
+        return null;
+    }
 
     @Override
     public Void visitExpressionStmt(Expression stmt) {

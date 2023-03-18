@@ -15,15 +15,40 @@ class Parser {
     List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         while (!isAtEnd()) {
-            statements.add(statement());
+            statements.add(declaration());
         }
         return statements;
     }
 
+    private Stmt declaration() {
+        try {
+            if (match(TokenType.VAR)) {
+                return varDeclaration();
+            }
+            return statement();
+        } catch (ParseError error) {
+            synchronize();
+            return null;
+        }
+    }
+
+    private Stmt varDeclaration() {
+        // 变量声明语句
+        Token name = consume(TokenType.IDENTIFIER, "Expect variable name.");
+        Expr initializer = null;
+        if (match(TokenType.EQUAL)) {
+            initializer = expression();
+        }
+        consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Var(name, initializer);
+    }
+
     private Stmt statement() {
         if (match(TokenType.PRINT)) {
+            // 如果遇到 print 关键字
             return printStatement();
         }
+        // 其他视为 表达式
         return expressionStatement();
     }
 
@@ -48,25 +73,49 @@ class Parser {
     }
 
     private Expr expression() {
-        return equality();
+        // return equality();
+        return assignment();
     }
 
     /*
         第一部分
-        expression     → equality ;
+        / expression     → equality ;
+        expression     → assignment ;
+        assignment     → IDENTIFIER "=" assignment | equality ;
         equality       → comparison ( ( "!=" | "==" ) comparison )* ;
         comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
         term           → factor ( ( "-" | "+" ) factor )* ;
         factor         → unary ( ( "/" | "*" ) unary )* ;
         unary          → ( "!" | "-" ) unary | primary ;
-        primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+        primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
 
         第二部分
-        program        → statement* EOF ;
+        program        → declaration* EOF ;
+        declaration    → varDecl | statement ;
+        varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
         statement      → exprStmt | printStmt ;
         exprStmt       → expression ";" ;
         printStmt      → "print" expression ";" ;
      */
+
+    private Expr assignment() {
+        // assignment     → IDENTIFIER "=" assignment | equality ;
+        Expr expr = equality();
+
+        if (match(TokenType.EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+
+            if (expr instanceof Expr.Variable) {
+                // 如果左侧是个变量表达式 认为是赋值操作
+                Token name = ((Expr.Variable) expr).name;
+                return new Expr.Assign(name, value);
+            }
+
+            error(equals, "Invalid assignment target.");
+        }
+        return expr;
+    }
 
     private Expr equality() {
         // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -137,6 +186,10 @@ class Parser {
         if (match(TokenType.NUMBER, TokenType.STRING)) {
             return new Expr.Literal(previous().literal);
         }
+        if (match(TokenType.IDENTIFIER)) {
+            // 如果是个标识符 给一个变量声明语句
+            return new Expr.Variable(previous());
+        }
         if (match(TokenType.LEFT_PAREN)) {
             // 如果遇到左括号 就递归解析括号内部的表达式
             Expr expr = expression();
@@ -144,7 +197,6 @@ class Parser {
             consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
             return new Expr.Grouping(expr);
         }
-        // synchronize(); ?
         throw error(peek(), "Expect expression.");
     }
 
