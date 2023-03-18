@@ -2,6 +2,6 @@ jlox:
 	javac com/zk/jlox/Jlox.java
 	java com.zk.jlox.Jlox ${FILE}
 
-Expr.java:
+gen_ast:
 	javac com/zk/tool/GenerateAst.java
 	java com.zk.tool.GenerateAst ./com/zk/jlox

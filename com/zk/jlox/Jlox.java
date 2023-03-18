@@ -72,15 +72,15 @@ public class Jlox {
 
         // 解析器 生成语句
         Parser parser = new Parser(tokens);
-        Expr expression = parser.parse();
+        List<Stmt> statements = parser.parse();
         if (hadError) {
             return;
         }
 
-        System.out.println(new AstPrinter().print(expression));
+        // System.out.println(new AstPrinter().print(expression));
 
         // 解释器执行语句
-        interpreter.interpret(expression);
+        interpreter.interpret(statements);
     }
 
     static void error(int line, String message) {

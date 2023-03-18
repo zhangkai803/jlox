@@ -1,11 +1,42 @@
 package com.zk.jlox;
 
+import java.util.List;
+
 import com.zk.jlox.Expr.Binary;
 import com.zk.jlox.Expr.Grouping;
 import com.zk.jlox.Expr.Literal;
 import com.zk.jlox.Expr.Unary;
+import com.zk.jlox.Stmt.Expression;
+import com.zk.jlox.Stmt.Print;
 
-class Interpreter implements Expr.Visitor<Object> {
+class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+
+    @Override
+    public Void visitExpressionStmt(Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringfy(value));
+        return null;
+    }
+
+    void interpret(List<Stmt> statements) {
+        try {
+            for (Stmt stmt: statements) {
+                execute(stmt);
+            }
+        } catch (RuntimeError error) {
+            Jlox.runtimeError(error);
+        }
+    }
+
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
+    }
 
     void interpret(Expr expr) {
         try {

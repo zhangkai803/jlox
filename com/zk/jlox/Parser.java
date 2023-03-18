@@ -1,5 +1,6 @@
 package com.zk.jlox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 class Parser {
@@ -11,7 +12,34 @@ class Parser {
         this.tokens = tokens;
     }
 
-    Expr parse() {
+    List<Stmt> parse() {
+        List<Stmt> statements = new ArrayList<>();
+        while (!isAtEnd()) {
+            statements.add(statement());
+        }
+        return statements;
+    }
+
+    private Stmt statement() {
+        if (match(TokenType.PRINT)) {
+            return printStatement();
+        }
+        return expressionStatement();
+    }
+
+    private Stmt expressionStatement() {
+        Expr expr = expression();
+        consume(TokenType.SEMICOLON, "Expect ';' after expression.");
+        return new Stmt.Expression(expr);
+    }
+
+    private Stmt printStatement() {
+        Expr value = expression();
+        consume(TokenType.SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(value);
+    }
+
+    Expr parseOld() {
         try{
             return expression();
         } catch (ParseError error) {
@@ -24,6 +52,7 @@ class Parser {
     }
 
     /*
+        第一部分
         expression     → equality ;
         equality       → comparison ( ( "!=" | "==" ) comparison )* ;
         comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
@@ -31,6 +60,12 @@ class Parser {
         factor         → unary ( ( "/" | "*" ) unary )* ;
         unary          → ( "!" | "-" ) unary | primary ;
         primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+
+        第二部分
+        program        → statement* EOF ;
+        statement      → exprStmt | printStmt ;
+        exprStmt       → expression ";" ;
+        printStmt      → "print" expression ";" ;
      */
 
     private Expr equality() {

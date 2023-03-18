@@ -1,5 +1,7 @@
-var a
-
-a = 1
-
-print a
+1+1;
+1-1;
+1*2;
+3/1;
+print "one";
+print true;
+print 2 + 1;
