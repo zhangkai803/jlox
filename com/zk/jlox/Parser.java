@@ -45,11 +45,16 @@ class Parser {
 
     private Stmt statement() {
         if (match(TokenType.IF)) {
+            // 如果遇到 if 关键字
             return ifStatement();
         }
         if (match(TokenType.PRINT)) {
             // 如果遇到 print 关键字
             return printStatement();
+        }
+        if (match(TokenType.WHILE)) {
+            // 如果遇到 while 关键字
+            return whileStatement();
         }
         if (match(TokenType.LEFT_BRACE)) {
             // 如果遇到左大括号 声明代码块
@@ -57,6 +62,16 @@ class Parser {
         }
         // 其他视为 表达式
         return expressionStatement();
+    }
+
+    private Stmt whileStatement() {
+        // whileStmt      → "while" "(" expression ")" statement ;
+        consume(TokenType.LEFT_PAREN, "Expect '(' after if.");
+        Expr expr = expression();
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
+
+        Stmt stmt = statement();
+        return new Stmt.While(expr, stmt);
     }
 
     private Stmt ifStatement() {
@@ -126,10 +141,11 @@ class Parser {
         program        → declaration* EOF ;
         declaration    → varDecl | statement ;
         varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement      → exprStmt | ifStmt | printStmt | block ;
+        statement      → exprStmt | ifStmt | printStmt | whileStmt | block ;
         exprStmt       → expression ";" ;
         ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
         printStmt      → "print" expression ";" ;
+        whileStmt      → "while" "(" expression ")" statement ;
         block          → "{" declaration* "}" ;
      */
 

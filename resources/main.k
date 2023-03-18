@@ -40,3 +40,12 @@ else
 
 print 1==1;
 print 1==0;
+
+var k = 1;
+k = k + 1;
+print k;
+
+while (k < 3)
+    // while 循环体目前只能包含一条语句 识别到分号就退出了
+    k = k + 1;
+    print k;
