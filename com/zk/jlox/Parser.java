@@ -54,7 +54,9 @@ class Parser {
         comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
         term           → factor ( ( "-" | "+" ) factor )* ;
         factor         → unary ( ( "/" | "*" ) unary )* ;
-        unary          → ( "!" | "-" ) unary | primary ;
+        unary          → ( "!" | "-" ) unary | call ;
+        call           → primary ( "(" arguments? ")" )* ;
+        arguments      → expression ( "," expression )* ;
         primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
 
         第二部分 语句
@@ -319,7 +321,43 @@ class Parser {
             Expr right = unary();
             return new Expr.Unary(operator, right);
         }
-        return primary();
+        return call();
+        // return primary();
+    }
+
+    private Expr call() {
+        // 解析函数调用
+        // call           → primary ( "(" arguments? ")" )* ;
+        Expr expr = primary();
+        while (true) {
+            if (match(TokenType.LEFT_PAREN)) {
+                // 如果当前位置是左括号 认为是一次函数调用
+                expr = finishCall(expr);
+            } else {
+                // 如果不是左括号 就只是一个普通的标识符
+                break;
+            }
+          }
+        return expr;
+    }
+
+    private Expr finishCall(Expr expr) {
+        // 解析函数调用的参数
+        List<Expr> arguments = new ArrayList<>();
+        if (!check(TokenType.RIGHT_PAREN)) {
+            // 如果不是右括号 就开始匹配后面的标识符 添加到参数列表 遇到逗号就继续
+            do {
+                if (arguments.size() >= 255) {
+                    // 函数参数数量限制 不可超过 255 个
+                    error(peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.add(expression());
+            } while (match(TokenType.COMMA));
+        }
+        // 参数列表匹配之后 确保函数调用括号闭合
+        Token paren = consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.");
+        // 返回一个函数调用表达式
+        return new Expr.Call(expr, paren, arguments);
     }
 
     private Expr primary() {

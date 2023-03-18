@@ -54,7 +54,10 @@ print ">> test for loop:";
 
 var a = 0;
 
-for (var i = 0; i < 101; i=i+1) {
+for (var i = 0; i < 10; i=i+1) {
     a = a + i;
 }
 print a;
+
+print ">> test native func lock():";
+print lock();

@@ -1,9 +1,11 @@
 package com.zk.jlox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.zk.jlox.Expr.Assign;
 import com.zk.jlox.Expr.Binary;
+import com.zk.jlox.Expr.Call;
 import com.zk.jlox.Expr.Grouping;
 import com.zk.jlox.Expr.Literal;
 import com.zk.jlox.Expr.Logical;
@@ -18,7 +20,54 @@ import com.zk.jlox.Stmt.While;
 
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
-    private Environment environment = new Environment();
+    final Environment globals = new Environment();
+    private Environment environment = globals;
+
+    // 解释器示例化
+    Interpreter() {
+        // 定义内置函数 lock 获取当前毫秒级时间戳
+        globals.define("lock", new JloxCallable() {
+
+            @Override
+            public int arity() {
+                return 0;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> arguments) {
+                return (double)System.currentTimeMillis() / 1000.0;
+            }
+
+            @Override
+            public String toString() {
+                return "<native fun>";
+            }
+        });
+    }
+
+    @Override
+    public Object visitCallExpr(Call expr) {
+        // 先把调用方表达式解析出来
+        Object callee = evaluate(expr.callee);
+
+        // 再把每个入参解析出来
+        List<Object> arguments = new ArrayList<>();
+        for (Expr arg: expr.arguments) {
+            arguments.add(evaluate(arg));
+        }
+
+        // 调用前检查一下 callable
+        if (!(callee instanceof JloxCallable)) {
+            throw new RuntimeError(expr.paren, "Can only call functions and classes.");
+        }
+
+        JloxCallable function = (JloxCallable)callee;
+        // 检查一下调用是否正常
+        if (arguments.size() != function.arity()) {
+            throw new RuntimeError(expr.paren, "Expect " + function.arity() + " arguments, but got " + arguments.size() + ".");
+        }
+        return function.call(this, arguments);
+    }
 
     @Override
     public Void visitWhileStmt(While stmt) {

@@ -16,7 +16,8 @@ class Environment {
     }
 
     void print() {
-        System.out.println("Env: " + values.toString());
+        // 打印作用域内的所有变量
+        // System.out.println("Env: " + values.toString());
     }
 
     void define(String name, Object value) {
