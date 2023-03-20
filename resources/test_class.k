@@ -7,3 +7,5 @@ class DevonshireCream {
 
 print DevonshireCream; // Prints "DevonshireCream".
 print DevonshireCream();
+
+print DevonshireCream().field;

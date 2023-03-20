@@ -8,6 +8,7 @@ import java.util.Stack;
 import com.zk.jlox.Expr.Assign;
 import com.zk.jlox.Expr.Binary;
 import com.zk.jlox.Expr.Call;
+import com.zk.jlox.Expr.Get;
 import com.zk.jlox.Expr.Grouping;
 import com.zk.jlox.Expr.Literal;
 import com.zk.jlox.Expr.Logical;
@@ -43,6 +44,12 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private enum FunctionType {
         NONE,
         FUNCTION
+    }
+
+    @Override
+    public Void visitGetExpr(Get expr) {
+        resolve(expr.object);
+        return null;
     }
 
     @Override

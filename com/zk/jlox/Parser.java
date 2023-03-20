@@ -16,7 +16,7 @@ class Parser {
         term           → factor ( ( "-" | "+" ) factor )* ;
         factor         → unary ( ( "/" | "*" ) unary )* ;
         unary          → ( "!" | "-" ) unary | call ;
-        call           → primary ( "(" arguments? ")" )* ;
+        call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
         arguments      → expression ( "," expression )* ;
         primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
 
@@ -410,6 +410,11 @@ class Parser {
             if (match(TokenType.LEFT_PAREN)) {
                 // 如果当前位置是左括号 认为是一次函数调用
                 expr = finishCall(expr);
+            } else if (match(TokenType.DOT)) {
+                // 如果遇到的是一个 点 认为是在访问一个属性
+                // expr = getProperty();
+                Token name = consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
+                expr = new Expr.Get(expr, name);
             } else {
                 // 如果不是左括号 就只是一个普通的标识符
                 break;
@@ -417,6 +422,13 @@ class Parser {
           }
         return expr;
     }
+
+    // private Expr getProperty() {
+    //     // 访问属性 有一个属性名就可以
+    //     Token name = consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
+    //     Expr expr = new Expr.Get(getProperty(), name);
+    //     return expr;
+    // }
 
     private Expr finishCall(Expr expr) {
         // 解析函数调用的参数

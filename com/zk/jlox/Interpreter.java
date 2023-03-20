@@ -8,6 +8,7 @@ import java.util.Map;
 import com.zk.jlox.Expr.Assign;
 import com.zk.jlox.Expr.Binary;
 import com.zk.jlox.Expr.Call;
+import com.zk.jlox.Expr.Get;
 import com.zk.jlox.Expr.Grouping;
 import com.zk.jlox.Expr.Literal;
 import com.zk.jlox.Expr.Logical;
@@ -32,6 +33,15 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     void resolve(Expr expr, int depth) {
         locals.put(expr, depth);
+    }
+
+    @Override
+    public Object visitGetExpr(Get expr) {
+        Object object = evaluate(expr.object);
+        if (object instanceof JloxInstance) {
+            return ((JloxInstance) object).get(expr.name);
+        }
+        throw new RuntimeError(expr.name, "Only instance have properties.");
     }
 
     @Override
