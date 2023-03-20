@@ -4,6 +4,10 @@ class DevonshireCream {
     print "serveOn in DevonshireCream";
     return "Scones";
   }
+
+  speak() {
+    print this;
+  }
 }
 print DevonshireCream; // Prints "DevonshireCream".
 
@@ -24,3 +28,6 @@ print ">> test get undefined instance property:";
 print ">> test class method:";
 var res = ins.serveOn();
 print res;
+
+print ">> test this pointer:";
+ins.speak();

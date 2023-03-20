@@ -13,6 +13,7 @@ import com.zk.jlox.Expr.Grouping;
 import com.zk.jlox.Expr.Literal;
 import com.zk.jlox.Expr.Logical;
 import com.zk.jlox.Expr.Set;
+import com.zk.jlox.Expr.This;
 import com.zk.jlox.Expr.Unary;
 import com.zk.jlox.Expr.Variable;
 import com.zk.jlox.Stmt.Block;
@@ -31,9 +32,13 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private Environment environment = globals;
     private final Map<Expr, Integer> locals = new HashMap<>();
 
-
     void resolve(Expr expr, int depth) {
         locals.put(expr, depth);
+    }
+
+    @Override
+    public Object visitThisExpr(This expr) {
+        return lookUpVariable(expr.keyword, expr);
     }
 
     @Override
@@ -64,7 +69,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
         Map<String, JloxFunction> methods = new HashMap<>();
         for (Stmt.Function method: stmt.methods) {
-            JloxFunction function = new JloxFunction(method);
+            JloxFunction function = new JloxFunction(method, environment);
             methods.put(method.name.lexeme, function);
         }
 
@@ -84,7 +89,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFunctionStmt(Function stmt) {
-        JloxFunction function = new JloxFunction(stmt);
+        JloxFunction function = new JloxFunction(stmt, environment);
         environment.define(stmt.name.lexeme, function);
         return null;
     }
@@ -210,7 +215,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return lookUpVariable(expr.name, expr);
     }
 
-    private Object lookUpVariable(Token name, Variable expr) {
+    private Object lookUpVariable(Token name, Expr expr) {
         Integer distance = locals.get(expr);
         if (distance != null) {
           return environment.getAt(distance, name.lexeme);

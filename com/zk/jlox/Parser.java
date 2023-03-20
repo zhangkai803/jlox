@@ -466,6 +466,9 @@ class Parser {
         if (match(TokenType.NUMBER, TokenType.STRING)) {
             return new Expr.Literal(previous().literal);
         }
+        if (match(TokenType.THIS)) {
+            return new Expr.This(previous());
+        }
         if (match(TokenType.IDENTIFIER)) {
             // 如果是个标识符 给一个变量声明语句
             return new Expr.Variable(previous());

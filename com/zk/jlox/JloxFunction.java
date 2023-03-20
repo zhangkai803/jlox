@@ -5,9 +5,11 @@ import java.util.List;
 class JloxFunction implements JloxCallable {
 
     private final Stmt.Function declaration;
+    private final Environment closure;
 
-    JloxFunction(Stmt.Function declaration) {
+    JloxFunction(Stmt.Function declaration, Environment closure) {
         this.declaration = declaration;
+        this.closure = closure;
     }
 
     @Override
@@ -18,7 +20,7 @@ class JloxFunction implements JloxCallable {
     @Override
     public Object call(Interpreter interpreter, List<Object> arguments) {
         // 每个函数调用都要创建自己的 env
-        Environment environment = new Environment(interpreter.globals);
+        Environment environment = new Environment(closure);
         // 先将函数的入参注入到当前作用域中
         for (int i = 0; i < declaration.params.size(); i++) {
             environment.define(declaration.params.get(i).lexeme, arguments.get(i));
@@ -37,6 +39,12 @@ class JloxFunction implements JloxCallable {
     @Override
     public String toString() {
         return "<fun " + declaration.name.lexeme + ">";
+    }
+
+    public JloxFunction bind(JloxInstance jloxInstance) {
+        Environment environment = new Environment(closure);
+        environment.define("this", jloxInstance);
+        return new JloxFunction(declaration, environment);
     }
 
 }

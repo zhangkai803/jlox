@@ -13,6 +13,7 @@ import com.zk.jlox.Expr.Grouping;
 import com.zk.jlox.Expr.Literal;
 import com.zk.jlox.Expr.Logical;
 import com.zk.jlox.Expr.Set;
+import com.zk.jlox.Expr.This;
 import com.zk.jlox.Expr.Unary;
 import com.zk.jlox.Expr.Variable;
 import com.zk.jlox.Stmt.Block;
@@ -32,12 +33,22 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private FunctionType currentFunction = FunctionType.NONE;
 
     @Override
+    public Void visitThisExpr(This expr) {
+        resolveLocal(expr, expr.keyword);
+        return null;
+    }
+
+    @Override
     public Void visitClassStmt(Class stmt) {
         declare(stmt.name);
         define(stmt.name);
+
+        beginScope();
+        scopes.peek().put("this", true);
         for (Stmt.Function method : stmt.methods) {
             resolveFunction(method, FunctionType.METHOD);
         }
+        endScope();
         return null;
     }
 
@@ -122,6 +133,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         resolveLocal(expr, expr.name);
         return null;
     }
+
     private void resolveLocal(Expr expr, Token name) {
         // 倒序遍历作用域堆栈 由最近的开始
         for (int i = scopes.size() - 1; i >= 0; i--) {

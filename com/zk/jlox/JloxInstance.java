@@ -23,7 +23,7 @@ class JloxInstance {
         }
         JloxFunction method = klass.findMethod(name.lexeme);
         if (method != null) {
-            return method;
+            return method.bind(this);  // 这里的 this 是 jloxInstance 本身，把方法绑定到实例上
         }
         throw new RuntimeError(name, "Undefined property '" + name.lexeme +"'.");
     }
