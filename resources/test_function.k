@@ -1,5 +1,5 @@
-print ">> test native func lock():";
-print lock();
+print ">> test native func clock():";
+print clock();
 
 print ">> test custom func:";
 fun sayHi(first, last) {

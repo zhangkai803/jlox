@@ -8,7 +8,7 @@ class Parser {
     /*
         第一部分 表达式
         expression     → assignment ;
-        assignment     → IDENTIFIER "=" assignment | logic_or ;
+        assignment     → ( call "." )? IDENTIFIER "=" assignment | logic_or ;
         logic_or       → logic_and ("or" logic_and)* ;
         logic_and      → equality ( "and " equality )* ;
         equality       → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -306,7 +306,7 @@ class Parser {
     }
 
     private Expr assignment() {
-        // assignment     → IDENTIFIER "=" assignment | logic_or ;
+        // assignment     → ( call "." )? IDENTIFIER "=" assignment | logic_or ;
         Expr expr = or();
 
         if (match(TokenType.EQUAL)) {
@@ -317,6 +317,9 @@ class Parser {
                 // 如果左侧是个变量表达式 认为是赋值操作
                 Token name = ((Expr.Variable) expr).name;
                 return new Expr.Assign(name, value);
+            } else if (expr instanceof Expr.Get) {
+                Expr.Get get = (Expr.Get)expr;
+                return new Expr.Set(get.object, get.name, value);
             }
 
             error(equals, "Invalid assignment target.");

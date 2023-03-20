@@ -12,6 +12,7 @@ import com.zk.jlox.Expr.Get;
 import com.zk.jlox.Expr.Grouping;
 import com.zk.jlox.Expr.Literal;
 import com.zk.jlox.Expr.Logical;
+import com.zk.jlox.Expr.Set;
 import com.zk.jlox.Expr.Unary;
 import com.zk.jlox.Expr.Variable;
 import com.zk.jlox.Stmt.Block;
@@ -44,6 +45,13 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private enum FunctionType {
         NONE,
         FUNCTION
+    }
+
+    @Override
+    public Void visitSetExpr(Set expr) {
+        resolve(expr.value);
+        resolve(expr.object);
+        return null;
     }
 
     @Override

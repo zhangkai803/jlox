@@ -12,6 +12,7 @@ import com.zk.jlox.Expr.Get;
 import com.zk.jlox.Expr.Grouping;
 import com.zk.jlox.Expr.Literal;
 import com.zk.jlox.Expr.Logical;
+import com.zk.jlox.Expr.Set;
 import com.zk.jlox.Expr.Unary;
 import com.zk.jlox.Expr.Variable;
 import com.zk.jlox.Stmt.Block;
@@ -33,6 +34,19 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     void resolve(Expr expr, int depth) {
         locals.put(expr, depth);
+    }
+
+    @Override
+    public Object visitSetExpr(Set expr) {
+        // 先把要设置值的对象拿出来
+        Object object = evaluate(expr.object);
+        if (!(object instanceof JloxInstance)) {
+            throw new RuntimeError(null, null);
+        }
+        // 再把值计算出来
+        Object value = evaluate(expr.value);
+        ((JloxInstance) object).set(expr.name, value);
+        return null;
     }
 
     @Override
@@ -70,8 +84,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     // 解释器示例化
     Interpreter() {
-        // 定义内置函数 lock 获取当前毫秒级时间戳
-        globals.define("lock", new JloxCallable() {
+        // 定义内置函数 clock 获取当前毫秒级时间戳
+        globals.define("clock", new JloxCallable() {
 
             @Override
             public int arity() {
@@ -85,7 +99,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
             @Override
             public String toString() {
-                return "<native fun>";
+                return "<native fun clock>";
             }
         });
     }

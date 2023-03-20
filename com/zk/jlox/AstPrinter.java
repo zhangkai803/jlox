@@ -4,9 +4,15 @@ import com.zk.jlox.Expr.Assign;
 import com.zk.jlox.Expr.Call;
 import com.zk.jlox.Expr.Get;
 import com.zk.jlox.Expr.Logical;
+import com.zk.jlox.Expr.Set;
 import com.zk.jlox.Expr.Variable;
 
 class AstPrinter implements Expr.Visitor<String> {
+
+    @Override
+    public String visitSetExpr(Set expr) {
+        return null;
+    }
 
     @Override
     public String visitGetExpr(Get expr) {
