@@ -23,7 +23,8 @@ class JloxInstance {
         }
         JloxFunction method = klass.findMethod(name.lexeme);
         if (method != null) {
-            return method.bind(this);  // 这里的 this 是 jloxInstance 本身，把方法绑定到实例上
+            // ? 每次访问方法 都需要重新绑定到实例上吗 是不是可以只在实例化的时候绑一次
+            return method.bind(this);  // 这里的 this 是 jloxInstance 本身
         }
         throw new RuntimeError(name, "Undefined property '" + name.lexeme +"'.");
     }

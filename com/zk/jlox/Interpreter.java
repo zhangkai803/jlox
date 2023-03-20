@@ -69,7 +69,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
         Map<String, JloxFunction> methods = new HashMap<>();
         for (Stmt.Function method: stmt.methods) {
-            JloxFunction function = new JloxFunction(method, environment);
+            // 声明类中的方法
+            JloxFunction function = new JloxFunction(method, environment, method.name.lexeme.equals("init"));
             methods.put(method.name.lexeme, function);
         }
 
@@ -89,7 +90,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFunctionStmt(Function stmt) {
-        JloxFunction function = new JloxFunction(stmt, environment);
+        // 这里是普通函数的定义
+        JloxFunction function = new JloxFunction(stmt, environment, false);
         environment.define(stmt.name.lexeme, function);
         return null;
     }

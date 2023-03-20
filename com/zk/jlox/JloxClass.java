@@ -15,12 +15,22 @@ class JloxClass implements JloxCallable {
 
     @Override
     public int arity() {
+        JloxFunction initializer = findMethod("init");
+        if (initializer != null) {
+            return initializer.arity();
+        }
         return 0;
     }
 
     @Override
     public Object call(Interpreter interpreter, List<Object> arguments) {
         JloxInstance instance = new JloxInstance(this);
+        // 找一下当前类有没有定义初始化方法
+        JloxFunction initializer = findMethod("init");
+        if (initializer != null) {
+            // 如果有初始化方法 实例化的时候要调一下
+            initializer.bind(instance).call(interpreter, arguments);
+        }
         return instance;
     }
 

@@ -60,7 +60,7 @@ consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
 
 ```sh
 print ">> test set instance property:";
-var ins = DevonshireCream();
+var ins = Class();
 ins.field = 1;  # BUG: Undefined property 'field'.
 print ins.field;
 ```

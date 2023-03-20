@@ -42,7 +42,8 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private enum FunctionType {
         NONE,
         FUNCTION,
-        METHOD
+        METHOD,
+        INITIALIZER
     }
 
     private enum ClassType {
@@ -70,7 +71,12 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         beginScope();
         scopes.peek().put("this", true);
         for (Stmt.Function method : stmt.methods) {
-            resolveFunction(method, FunctionType.METHOD);
+            FunctionType declaration = FunctionType.METHOD;
+            if (method.name.lexeme.equals("init")) {
+                // 如果 method 名是 init 视为实例的初始化方法 标记一下
+                declaration = FunctionType.INITIALIZER;
+            }
+            resolveFunction(method, declaration);
         }
         endScope();
         currenClass = enclosingClass;
@@ -245,6 +251,9 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             Jlox.error(stmt.keyword, "Can't return from top-level code.");
         }
         if (stmt.value != null) {
+            if (currentFunction == FunctionType.INITIALIZER) {
+                Jlox.error(stmt.keyword, "Can't return a value from an initializer.");
+            }
             resolve(stmt.value);
         }
         return null;

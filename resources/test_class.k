@@ -1,7 +1,7 @@
 print ">> test class declaration:";
-class DevonshireCream {
+class Class {
   serveOn() {
-    print "serveOn in DevonshireCream";
+    print "serveOn in Class";
     return "Scones";
   }
 
@@ -9,10 +9,10 @@ class DevonshireCream {
     print this;
   }
 }
-print DevonshireCream; // Prints "DevonshireCream".
+print Class; // Prints "Class".
 
 print ">> test class intance:";
-var ins = DevonshireCream();
+var ins = Class();
 print ins;
 
 print ">> test set instance property:";
@@ -35,6 +35,17 @@ ins.speak();
 print ">> test this usage outside of class:";
 // print this;  // Output: undefined variable this
 fun test() {
-    print this;
+    print this;  // [line: 38] Error  at 'this': Can't use this outside of a class.
 }
 // test();  // Output: Get variable fail. Undefined variable 'this'.
+
+print ">> test init method:";
+class InitClass {
+    init() {
+      print "do init";
+      return 1;  // [line: 46] Error  at 'return': Can't return a value from an initializer.
+      return;  // no error
+      print "after return in init";  // no print
+    }
+}
+InitClass();

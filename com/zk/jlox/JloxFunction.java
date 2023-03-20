@@ -6,10 +6,12 @@ class JloxFunction implements JloxCallable {
 
     private final Stmt.Function declaration;
     private final Environment closure;
+    private final boolean isInitializer;
 
-    JloxFunction(Stmt.Function declaration, Environment closure) {
+    JloxFunction(Stmt.Function declaration, Environment closure, boolean isInitializer) {
         this.declaration = declaration;
         this.closure = closure;
+        this.isInitializer = isInitializer;
     }
 
     @Override
@@ -31,7 +33,17 @@ class JloxFunction implements JloxCallable {
             interpreter.executeBlock(declaration.body, environment);
         } catch (ReturnValue value) {
             // 把返回值以异常的形式抛出
+            if (isInitializer) {
+                // 如果当前方法是实例的初始化方法 只能返回 this
+                return closure.getAt(0, "this");
+            }
             return value.value;
+        }
+
+        // 走到这里说明 函数中没有 return 语句
+        if (isInitializer) {
+            // 如果当前函数 是某个类的初始化方法 返回 this
+            return closure.getAt(0, "this");
         }
         return null;
     }
@@ -44,7 +56,7 @@ class JloxFunction implements JloxCallable {
     public JloxFunction bind(JloxInstance jloxInstance) {
         Environment environment = new Environment(closure);
         environment.define("this", jloxInstance);
-        return new JloxFunction(declaration, environment);
+        return new JloxFunction(declaration, environment, isInitializer);
     }
 
 }
