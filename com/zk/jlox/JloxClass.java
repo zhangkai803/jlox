@@ -6,10 +6,12 @@ import java.util.Map;
 class JloxClass implements JloxCallable {
 
     final String name;
+    final JloxClass superClass;
     private final Map<String, JloxFunction> methods;
 
-    public JloxClass(String name, Map<String, JloxFunction> methods) {
+    public JloxClass(String name, JloxClass superClass, Map<String, JloxFunction> methods) {
         this.name = name;
+        this.superClass = superClass;
         this.methods = methods;
     }
 
@@ -36,6 +38,9 @@ class JloxClass implements JloxCallable {
 
     @Override
     public String toString() {
+        if (this.superClass != null) {
+            return "<class " + this.name + " inherit from " + this.superClass.name + ">";
+        }
         return "<class " + this.name + ">";
     }
 

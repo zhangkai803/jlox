@@ -49,3 +49,8 @@ class InitClass {
     }
 }
 InitClass();
+
+print ">> test class inherit:";
+class A {}
+class B < A {}
+print B;

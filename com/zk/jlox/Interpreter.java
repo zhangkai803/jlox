@@ -65,6 +65,15 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitClassStmt(Class stmt) {
+        Object superClass = null;
+        if (stmt.superClass != null) {
+            // 运行时取出父类 并检测父类必须也是个类
+            superClass = evaluate(stmt.superClass);
+            if (!(superClass instanceof JloxClass)) {
+                throw new RuntimeError(stmt.name, "Super class must be a class.");
+            }
+        }
+
         environment.define(stmt.name.lexeme, null);
 
         Map<String, JloxFunction> methods = new HashMap<>();
@@ -74,7 +83,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             methods.put(method.name.lexeme, function);
         }
 
-        JloxClass klass = new JloxClass(stmt.name.lexeme, methods);
+        JloxClass klass = new JloxClass(stmt.name.lexeme, (JloxClass)superClass, methods);
         environment.assign(stmt.name, klass);
         return null;
     }

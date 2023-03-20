@@ -23,7 +23,7 @@ class Parser {
         第二部分 语句
         program        → declaration* EOF ;
         declaration    → classDecl | funDecl | varDecl | statement ;
-        classDecl      → "class" IDENTIFIER "{" function* "}" ;
+        classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}" ;
         funDecl        → "fun" function ;
         function       → IDENTIFIER "(" parameters? ")" block ;
         parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
@@ -73,9 +73,16 @@ class Parser {
     }
 
     private Stmt.Class classDeclaration() {
-        // classDecl      → "class" IDENTIFIER "{" function* "}" ;
+        // classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}" ;
         // 先要有一个 类名
         Token name = consume(TokenType.IDENTIFIER, "Expect class name.");
+        Expr.Variable superClass = null;
+        if (match(TokenType.LESS)) {
+            // 如果有小于号 说明有继承父类
+            // 尝试取父类名字
+            consume(TokenType.IDENTIFIER, "Expect superclass name.");
+            superClass = new Expr.Variable(previous());
+        }
         // 然后要有左大括号
         consume(TokenType.LEFT_BRACE, "Expect '{' after class name.");
 
@@ -86,7 +93,7 @@ class Parser {
         }
         // 然后要有右大括号
         consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
-        return new Stmt.Class(name, methods);
+        return new Stmt.Class(name, superClass, methods);
     }
 
     private Stmt funDeclaration() {

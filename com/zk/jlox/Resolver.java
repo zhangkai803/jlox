@@ -68,6 +68,15 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         declare(stmt.name);
         define(stmt.name);
 
+        if (stmt.superClass != null && stmt.name.lexeme.equals(stmt.superClass.name.lexeme)) {
+            Jlox.error(stmt.name, "A class can't inherit from itself.");
+        }
+
+        if (stmt.superClass != null) {
+            // 如果有继承关系 要检查一下父类是否已定义
+            resolve(stmt.superClass);
+        }
+
         beginScope();
         scopes.peek().put("this", true);
         for (Stmt.Function method : stmt.methods) {
