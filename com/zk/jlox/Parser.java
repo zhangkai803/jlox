@@ -22,7 +22,8 @@ class Parser {
 
         第二部分 语句
         program        → declaration* EOF ;
-        declaration    → funDecl | varDecl | statement ;
+        declaration    → classDecl | funDecl | varDecl | statement ;
+        classDecl      → "class" IDENTIFIER "{" function* "}" ;
         funDecl        → "fun" function ;
         function       → IDENTIFIER "(" parameters? ")" block ;
         parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
@@ -55,6 +56,9 @@ class Parser {
 
     private Stmt declaration() {
         try {
+            if (match(TokenType.CLASS)) {
+                return classDeclaration();
+            }
             if (match(TokenType.FUN)) {
                 return funDeclaration();
             }
@@ -68,12 +72,29 @@ class Parser {
         }
     }
 
+    private Stmt.Class classDeclaration() {
+        // classDecl      → "class" IDENTIFIER "{" function* "}" ;
+        // 先要有一个 类名
+        Token name = consume(TokenType.IDENTIFIER, "Expect class name.");
+        // 然后要有左大括号
+        consume(TokenType.LEFT_BRACE, "Expect '{' after class name.");
+
+        // 解析里面的方法
+        List<Stmt.Function> methods = new ArrayList<>();
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            methods.add(function("method"));
+        }
+        // 然后要有右大括号
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
+        return new Stmt.Class(name, methods);
+    }
+
     private Stmt funDeclaration() {
         // funDecl        → "fun" function ;
         return function("function");
     }
 
-    private Stmt function(String kind) {
+    private Stmt.Function function(String kind) {
         // function       → IDENTIFIER "(" parameters? ")" block ;
         // parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
         // 先确保有一个 IDENTIFIER 作为函数名
@@ -82,11 +103,11 @@ class Parser {
         consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
         // 解析入参列表
         List<Token> parameters = new ArrayList<>();
-        if (!match(TokenType.RIGHT_PAREN)) {
+        if (!check(TokenType.RIGHT_PAREN)) {
             // 如果下一个不是右括号 证明有定义函数入参 一直解析 遇到逗号继续
             do {
                 if (parameters.size() > 255) {
-                    throw new RuntimeError(peek(), "Can't have more than 255 parameters.");
+                    error(peek(), "Can't have more than 255 parameters.");
                 }
                 parameters.add(consume(TokenType.IDENTIFIER, "Expect parameter name."));
             } while (match(TokenType.COMMA));

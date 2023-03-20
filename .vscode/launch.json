@@ -10,7 +10,8 @@
             "request": "launch",
             "mainClass": "com.zk.jlox.Jlox",
             "projectName": "jlox_2f2a8186",
-            "args": "resources/main.k"
+            // "args": "resources/test_function.k"
+            "args": "resources/test_class.k"
         },
         {
             "type": "java",

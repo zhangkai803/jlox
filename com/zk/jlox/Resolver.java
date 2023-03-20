@@ -14,6 +14,7 @@ import com.zk.jlox.Expr.Logical;
 import com.zk.jlox.Expr.Unary;
 import com.zk.jlox.Expr.Variable;
 import com.zk.jlox.Stmt.Block;
+import com.zk.jlox.Stmt.Class;
 import com.zk.jlox.Stmt.Expression;
 import com.zk.jlox.Stmt.Function;
 import com.zk.jlox.Stmt.If;
@@ -27,6 +28,13 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
+
+    @Override
+    public Void visitClassStmt(Class stmt) {
+        declare(stmt.name);
+        define(stmt.name);
+        return null;
+    }
 
     public Resolver(Interpreter interpreter) {
         this.interpreter = interpreter;

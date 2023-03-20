@@ -14,6 +14,7 @@ import com.zk.jlox.Expr.Logical;
 import com.zk.jlox.Expr.Unary;
 import com.zk.jlox.Expr.Variable;
 import com.zk.jlox.Stmt.Block;
+import com.zk.jlox.Stmt.Class;
 import com.zk.jlox.Stmt.Expression;
 import com.zk.jlox.Stmt.Function;
 import com.zk.jlox.Stmt.If;
@@ -31,6 +32,14 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     void resolve(Expr expr, int depth) {
         locals.put(expr, depth);
+    }
+
+    @Override
+    public Void visitClassStmt(Class stmt) {
+        environment.define(stmt.name.lexeme, null);
+        JloxClass klass = new JloxClass(stmt.name.lexeme);
+        environment.assign(stmt.name, klass);
+        return null;
     }
 
     @Override
