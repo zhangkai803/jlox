@@ -48,6 +48,10 @@ class JloxClass implements JloxCallable {
         if (methods.containsKey(lexeme)) {
             return methods.get(lexeme);
         }
+        if (this.superClass != null) {
+            // 当前类找不到的方法 去父类找
+            return this.superClass.findMethod(lexeme);
+        }
         return null;
     }
 

@@ -51,6 +51,9 @@ class InitClass {
 InitClass();
 
 print ">> test class inherit:";
-class A {}
+class A {
+    methodA() {}
+}
 class B < A {}
 print B;
+print B().methodA;
