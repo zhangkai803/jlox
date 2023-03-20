@@ -1,6 +1,7 @@
 print ">> test class declaration:";
 class DevonshireCream {
   serveOn() {
+    print "serveOn in DevonshireCream";
     return "Scones";
   }
 }
@@ -18,4 +19,8 @@ print ">> test get instance property:";
 print ins.field;
 
 print ">> test get undefined instance property:";
-print ins.undefine_field;
+// print ins.undefine_field;
+
+print ">> test class method:";
+var res = ins.serveOn();
+print res;

@@ -61,7 +61,14 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitClassStmt(Class stmt) {
         environment.define(stmt.name.lexeme, null);
-        JloxClass klass = new JloxClass(stmt.name.lexeme);
+
+        Map<String, JloxFunction> methods = new HashMap<>();
+        for (Stmt.Function method: stmt.methods) {
+            JloxFunction function = new JloxFunction(method);
+            methods.put(method.name.lexeme, function);
+        }
+
+        JloxClass klass = new JloxClass(stmt.name.lexeme, methods);
         environment.assign(stmt.name, klass);
         return null;
     }

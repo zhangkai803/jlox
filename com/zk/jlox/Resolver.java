@@ -35,6 +35,9 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     public Void visitClassStmt(Class stmt) {
         declare(stmt.name);
         define(stmt.name);
+        for (Stmt.Function method : stmt.methods) {
+            resolveFunction(method, FunctionType.METHOD);
+        }
         return null;
     }
 
@@ -44,7 +47,8 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private enum FunctionType {
         NONE,
-        FUNCTION
+        FUNCTION,
+        METHOD
     }
 
     @Override
