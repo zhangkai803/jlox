@@ -26,20 +26,44 @@ import com.zk.jlox.Stmt.Return;
 import com.zk.jlox.Stmt.Var;
 import com.zk.jlox.Stmt.While;
 
+/**
+ * 在语法层面上 去检测并优化代码的语义
+ * 比如
+ *   - 一个变量 先访问 再定义 就是非法操作 这里可以报错出去 不用等到运行时
+ *   - 在类中的方法定义时 将 this 添加到语义中
+ */
 class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
+    private ClassType currenClass = ClassType.NONE;
+
+    private enum FunctionType {
+        NONE,
+        FUNCTION,
+        METHOD
+    }
+
+    private enum ClassType {
+        NONE,
+        CLASS
+    }
 
     @Override
     public Void visitThisExpr(This expr) {
+        if (currenClass == ClassType.NONE) {
+            Jlox.error(expr.keyword, "Can't use this outside of a class.");
+            return null;
+        }
         resolveLocal(expr, expr.keyword);
         return null;
     }
 
     @Override
     public Void visitClassStmt(Class stmt) {
+        ClassType enclosingClass = currenClass;
+        currenClass = ClassType.CLASS;
         declare(stmt.name);
         define(stmt.name);
 
@@ -49,17 +73,12 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             resolveFunction(method, FunctionType.METHOD);
         }
         endScope();
+        currenClass = enclosingClass;
         return null;
     }
 
     public Resolver(Interpreter interpreter) {
         this.interpreter = interpreter;
-    }
-
-    private enum FunctionType {
-        NONE,
-        FUNCTION,
-        METHOD
     }
 
     @Override

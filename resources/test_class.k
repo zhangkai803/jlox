@@ -31,3 +31,10 @@ print res;
 
 print ">> test this pointer:";
 ins.speak();
+
+print ">> test this usage outside of class:";
+// print this;  // Output: undefined variable this
+fun test() {
+    print this;
+}
+// test();  // Output: Get variable fail. Undefined variable 'this'.
