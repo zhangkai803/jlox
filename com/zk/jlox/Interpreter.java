@@ -13,6 +13,7 @@ import com.zk.jlox.Expr.Grouping;
 import com.zk.jlox.Expr.Literal;
 import com.zk.jlox.Expr.Logical;
 import com.zk.jlox.Expr.Set;
+import com.zk.jlox.Expr.Super;
 import com.zk.jlox.Expr.This;
 import com.zk.jlox.Expr.Unary;
 import com.zk.jlox.Expr.Variable;
@@ -34,6 +35,20 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     void resolve(Expr expr, int depth) {
         locals.put(expr, depth);
+    }
+
+    @Override
+    public Object visitSuperExpr(Super expr) {
+        int distance = locals.get(expr);
+        JloxClass superclass = (JloxClass)environment.getAt(distance, "super");
+        JloxInstance object = (JloxInstance)environment.getAt(distance - 1, "this");
+        JloxFunction method = superclass.findMethod(expr.method.lexeme);
+
+        if (method == null) {
+            // 父类找不到这个方法
+            throw new RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");
+        }
+        return method.bind(object);
     }
 
     @Override
@@ -76,6 +91,12 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
         environment.define(stmt.name.lexeme, null);
 
+        // 将 父类 的值设置到 super 上
+        if (stmt.superClass != null) {
+            environment = new Environment(environment);
+            environment.define("super", superClass);
+        }
+
         Map<String, JloxFunction> methods = new HashMap<>();
         for (Stmt.Function method: stmt.methods) {
             // 声明类中的方法
@@ -84,6 +105,10 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
 
         JloxClass klass = new JloxClass(stmt.name.lexeme, (JloxClass)superClass, methods);
+
+        if (superClass != null) {
+            environment = environment.enclosing;
+        }
         environment.assign(stmt.name, klass);
         return null;
     }

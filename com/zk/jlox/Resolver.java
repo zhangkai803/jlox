@@ -27,17 +27,17 @@ import com.zk.jlox.Stmt.Var;
 import com.zk.jlox.Stmt.While;
 
 /**
- * 在语法层面上 去检测并优化代码的语义
+ * 在语义层面上 去检测并优化代码
  * 比如
- *   - 一个变量 先访问 再定义 就是非法操作 这里可以报错出去 不用等到运行时
- *   - 在类中的方法定义时 将 this 添加到语义中
+ *   1. 一个变量 先访问 再定义 就是非法操作 这里可以报错出去 不用等到运行时
+ *   2. 在类中的方法定义时 将 this 添加到语义中 否则会报 this undefined
  */
 class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
-    private ClassType currenClass = ClassType.NONE;
+    private ClassType currentClass = ClassType.NONE;
 
     private enum FunctionType {
         NONE,
@@ -48,12 +48,25 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private enum ClassType {
         NONE,
-        CLASS
+        CLASS,
+        SUBCLASS
+    }
+
+    @Override
+    public Void visitSuperExpr(Expr.Super expr) {
+        // 在非子类环境下使用 super 是非法的
+        if (currentClass == ClassType.NONE) {
+            Jlox.error(expr.keyword, "Can't use 'super' outside of a class.");
+        } else if (currentClass != ClassType.SUBCLASS) {
+            Jlox.error(expr.keyword, "Can't use 'super' in a class with no superclass.");
+        }
+        resolveLocal(expr, expr.keyword);
+        return null;
     }
 
     @Override
     public Void visitThisExpr(This expr) {
-        if (currenClass == ClassType.NONE) {
+        if (currentClass == ClassType.NONE) {
             Jlox.error(expr.keyword, "Can't use this outside of a class.");
             return null;
         }
@@ -63,8 +76,8 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitClassStmt(Class stmt) {
-        ClassType enclosingClass = currenClass;
-        currenClass = ClassType.CLASS;
+        ClassType enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
         declare(stmt.name);
         define(stmt.name);
 
@@ -73,9 +86,16 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         }
 
         if (stmt.superClass != null) {
+            currentClass = ClassType.SUBCLASS;
             // 如果有继承关系 要检查一下父类是否已定义
             resolve(stmt.superClass);
+            // 新开一个作用域 把 super 语义注入进去
+            beginScope();
+            scopes.peek().put("super", true);
         }
+
+        // if (stmt.superClass != null) {
+        // }
 
         beginScope();
         scopes.peek().put("this", true);
@@ -88,7 +108,12 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             resolveFunction(method, declaration);
         }
         endScope();
-        currenClass = enclosingClass;
+        // 如果父类 还要跳出 super 语义所在的作用域
+        if (stmt.superClass != null) {
+            endScope();
+        }
+
+        currentClass = enclosingClass;
         return null;
     }
 

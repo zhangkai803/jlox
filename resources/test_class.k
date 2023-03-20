@@ -35,7 +35,7 @@ ins.speak();
 print ">> test this usage outside of class:";
 // print this;  // Output: undefined variable this
 fun test() {
-    print this;  // [line: 38] Error  at 'this': Can't use this outside of a class.
+    // print this;  // [line: 38] Error  at 'this': Can't use this outside of a class.
 }
 // test();  // Output: Get variable fail. Undefined variable 'this'.
 
@@ -43,7 +43,7 @@ print ">> test init method:";
 class InitClass {
     init() {
       print "do init";
-      return 1;  // [line: 46] Error  at 'return': Can't return a value from an initializer.
+      // return 1;  // [line: 46] Error  at 'return': Can't return a value from an initializer.
       return;  // no error
       print "after return in init";  // no print
     }
@@ -52,8 +52,19 @@ InitClass();
 
 print ">> test class inherit:";
 class A {
-    methodA() {}
+    methodA() {
+      // super.methodA();  // [line: 56] Error  at 'super': Can't use 'super' in a class with no superclass.
+      print "method A in A";
+    }
+
 }
-class B < A {}
+class B < A {
+    methodB() {
+      super.methodA();
+    }
+}
+
 print B;
-print B().methodA;
+print B().methodA;  // methodA was inherited
+B().methodB();  // Output: method A in A
+;

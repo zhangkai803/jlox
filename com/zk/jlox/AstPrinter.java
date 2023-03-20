@@ -5,10 +5,16 @@ import com.zk.jlox.Expr.Call;
 import com.zk.jlox.Expr.Get;
 import com.zk.jlox.Expr.Logical;
 import com.zk.jlox.Expr.Set;
+import com.zk.jlox.Expr.Super;
 import com.zk.jlox.Expr.This;
 import com.zk.jlox.Expr.Variable;
 
 class AstPrinter implements Expr.Visitor<String> {
+
+    @Override
+    public String visitSuperExpr(Super expr) {
+        return null;
+    }
 
     @Override
     public String visitThisExpr(This expr) {

@@ -4,6 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * 在语法层面上 识别出代码的每个部分
+ * - 对代码进行拆解
+ * - 得到抽象语法树
+ *
+ * 将一个个连续的 token 组装成 表达式 或 语句
+ */
 class Parser {
     /*
         第一部分 表达式
@@ -18,7 +25,7 @@ class Parser {
         unary          → ( "!" | "-" ) unary | call ;
         call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
         arguments      → expression ( "," expression )* ;
-        primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
+        primary        → "true" | "false" | "nil" | "this" | NUMBER | STRING | IDENTIFIER | "(" expression ")" | "super" "." IDENTIFIER ;
 
         第二部分 语句
         program        → declaration* EOF ;
@@ -460,7 +467,7 @@ class Parser {
     }
 
     private Expr primary() {
-        // primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+        // primary        → "true" | "false" | "nil" | "this" | NUMBER | STRING | IDENTIFIER | "(" expression ")" | "super" "." IDENTIFIER ;
         if (match(TokenType.TRUE)) {
             return new Expr.Literal(true);
         }
@@ -475,6 +482,12 @@ class Parser {
         }
         if (match(TokenType.THIS)) {
             return new Expr.This(previous());
+        }
+        if (match(TokenType.SUPER)) {
+            Token keyword = previous();
+            consume(TokenType.DOT, "Expect '.' after 'super'.");
+            Token method = consume(TokenType.IDENTIFIER, "Expect superclass method name.");
+            return new Expr.Super(keyword, method);
         }
         if (match(TokenType.IDENTIFIER)) {
             // 如果是个标识符 给一个变量声明语句
