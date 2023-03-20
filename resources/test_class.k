@@ -6,3 +6,4 @@ class DevonshireCream {
 }
 
 print DevonshireCream; // Prints "DevonshireCream".
+print DevonshireCream();
